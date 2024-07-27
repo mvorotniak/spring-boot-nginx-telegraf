@@ -1,0 +1,82 @@
+version: '3'
+
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:1.13
+    restart: always
+    ports:
+      - "8081:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - data-saver-java-app
+
+  data-saver-java-app:
+    container_name: "data-saver-java-app"
+    image: springio/data-saver-app:latest # be sure to create this image first (look at Dockerfile)
+    restart: always
+    depends_on:
+      - mongodb
+      - elasticsearch
+    ports:
+      - "8080:8080"
+
+  mongodb:
+    container_name: "mongodb"
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+
+  elasticsearch:
+    container_name: "elasticsearch"
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    environment:
+      - discovery.type=single-node
+      - xpack.license.self_generated.type=basic
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+        
+  telegraf:
+    container_name: "telegraf"
+    image: telegraf:latest
+    entrypoint: /bin/bash -c "chmod 666 /var/run/docker.sock && /entrypoint.sh telegraf"
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - influxdb
+    links:
+      - influxdb
+    ports:
+      - '8125:8125/udp'
+
+  influxdb:
+    container_name: "influxdb"
+    image: influxdb:1.8-alpine
+    env_file: configuration.env
+    ports:
+      - '8086:8086'
+    volumes:
+      - ./:/imports
+      - influxdb_data:/var/lib/influxdb
+
+  grafana:
+    container_name: "grafana"
+    image: grafana/grafana:8.0.2
+    depends_on:
+      - influxdb
+    env_file: configuration.env
+    links:
+      - influxdb
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./grafana/dashboards/:/var/lib/grafana/dashboards/
+
+volumes:
+  grafana_data: { }
+  influxdb_data: { }
