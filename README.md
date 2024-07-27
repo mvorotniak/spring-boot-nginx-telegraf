@@ -1,3 +1,15 @@
+# Telegraf Metrics
+
+- Run `start-containers.sh`, so all the required containers are created
+- Visit http://localhost:3000/ to see the metrics in Grafana
+- Import the Telegraf dashboard https://grafana.com/grafana/dashboards/61-telegraf-metrics/ in Grafana
+- Run `seige-script.sh` in order to simulate highload on the system
+- Observe the metrics on Grafana
+![img.png](grafana_images/img.png)
+![img_1.png](grafana_images/img_1.png)
+![img_2.png](grafana_images/img_2.png)
+![img_3.png](grafana_images/img_3.png)
+
 # Running the Application without Nginx
 
 Follow these steps to set up MongoDB and Elasticsearch locally using Docker
